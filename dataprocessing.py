@@ -96,6 +96,43 @@ top_authors_data = query("""
 
 top_authors_data.to_csv('./dataset/top_authors_data.csv', index=False)
 
+# Create book format analysis data
+format_data = query("""
+    select 
+        year(m.published_date) as year,
+        coalesce(m.format, 'Kindle') as book_format,
+        avg(m.price_numeric) as avg_price,
+        avg(m.page_count) as avg_page_count,
+        count(distinct m.parent_asin) as book_count,
+        count(r.asin) as total_reviews,
+        sum(r.rating * m.price_numeric) as total_sales
+    from processed_metadata m
+    left join books_reviews r using(parent_asin)
+    where m.published_date is not null and m.price_numeric is not null
+    group by year(m.published_date), coalesce(m.format, 'Kindle')
+    order by year, book_format
+""")
+
+# Add "All Formats" aggregate by year
+all_formats = query("""
+    select 
+        year(m.published_date) as year,
+        'All Formats' as book_format,
+        avg(m.price_numeric) as avg_price,
+        avg(m.page_count) as avg_page_count,
+        count(distinct m.parent_asin) as book_count,
+        count(r.asin) as total_reviews,
+        sum(r.rating * m.price_numeric) as total_sales
+    from processed_metadata m
+    left join books_reviews r using(parent_asin)
+    where m.published_date is not null and m.price_numeric is not null
+    group by year(m.published_date)
+    order by year
+""")
+
+format_data = pd.concat([format_data, all_formats], ignore_index=True)
+format_data.to_csv('./dataset/format_data.csv', index=False)
+
 print("Data processing complete!")
 print(f"Processed metadata: {len(processed_metadata)} rows")
 print(f"Scorecard data saved")
