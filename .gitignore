@@ -10,3 +10,9 @@ wheels/
 .venv
 dataset/metadata.csv
 dataset/reviews.csv
+dataset/genre_data.csv
+dataset/processed_metadata.csv
+dataset/top_authors_data.csv
+dataset/top_books_data.csv
+dataset/scorecard_data.csv
+dataset/format_data.csv
