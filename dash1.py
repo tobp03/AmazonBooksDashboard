@@ -7,6 +7,22 @@ import os
 st.set_page_config(page_title="Books Dashboard", layout="wide")
 st.title("Amazon Books Dashboard")
 
+# Hide Streamlit sidebar page navigation
+st.markdown("""
+<style>
+/* Hide the entire sidebar page navigation */
+section[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+
+/* Optional: hide sidebar entirely */
+section[data-testid="stSidebar"] {
+    display: none !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 # Load data (cache busts when files change)
 @st.cache_data
 def load_data(cache_bust: tuple):
@@ -443,5 +459,7 @@ with col_treemap:
     st.plotly_chart(fig, config={'responsive': True})
 
 
+if st.button("Go to Author Insights Dashboard"):
+    st.switch_page("pages/dash2.py")
 
 
