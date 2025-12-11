@@ -23,5 +23,4 @@ Team member:
    ```
    streamlit run dash1.py
    ```
-   This will process the data and launch the Streamlit dashboard automatically.
 
