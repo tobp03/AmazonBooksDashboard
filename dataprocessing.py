@@ -1,14 +1,7 @@
 import os
 import shutil
-import pandas as pd
 import duckdb
 import kagglehub
-
-# ------------------------------------------------------------
-# DuckDB helper
-# ------------------------------------------------------------
-def query(sql: str) -> pd.DataFrame:
-    return duckdb.sql(sql).df()
 
 # ------------------------------------------------------------
 # Paths
@@ -21,27 +14,22 @@ reviews_path = f"{OUTDIR}/reviews.csv"
 clean_reviews_path = f"{OUTDIR}/books_reviews_clean.csv"
 
 # ------------------------------------------------------------
-# Download Kaggle dataset (SAFE METHOD)
+# Download Kaggle datasets (SAFE & VERSION-PROOF)
 # ------------------------------------------------------------
 if not os.path.exists(metadata_path) or not os.path.exists(reviews_path):
-
     dataset_dir = kagglehub.dataset_download(
         "hadifariborzi/amazon-books-dataset-20k-books-727k-reviews"
     )
 
-    metadata_src = os.path.join(
-        dataset_dir, "amazon_books_metadata_sample_20k.csv"
+    shutil.copy(
+        os.path.join(dataset_dir, "amazon_books_metadata_sample_20k.csv"),
+        metadata_path,
     )
-    reviews_src = os.path.join(
-        dataset_dir, "amazon_books_reviews_sample_20k.csv"
+    shutil.copy(
+        os.path.join(dataset_dir, "amazon_books_reviews_sample_20k.csv"),
+        reviews_path,
     )
 
-    shutil.copy(metadata_src, metadata_path)
-    shutil.copy(reviews_src, reviews_path)
-
-# ------------------------------------------------------------
-# Download cleaned reviews dataset
-# ------------------------------------------------------------
 if not os.path.exists(clean_reviews_path):
     clean_reviews_dir = kagglehub.dataset_download("tobypu/book-reviews-clean")
     shutil.copy(
@@ -50,20 +38,30 @@ if not os.path.exists(clean_reviews_path):
     )
 
 # ------------------------------------------------------------
-# Load CSVs
+# DuckDB connection (LOW MEMORY SETTINGS)
 # ------------------------------------------------------------
-books_metadata = pd.read_csv(metadata_path)
-books_reviews = pd.read_csv(reviews_path)
-books_reviews_clean = pd.read_csv(clean_reviews_path)
+con = duckdb.connect()
+con.execute("PRAGMA threads=2")
+con.execute("PRAGMA memory_limit='1GB'")
 
-# Register DataFrames in DuckDB
-duckdb.register("books_metadata", books_metadata)
-duckdb.register("books_reviews", books_reviews)
+# ------------------------------------------------------------
+# Load CSVs DIRECTLY into DuckDB (NO PANDAS)
+# ------------------------------------------------------------
+con.execute(f"""
+    CREATE OR REPLACE TABLE books_metadata AS
+    SELECT * FROM read_csv_auto('{metadata_path}')
+""")
+
+con.execute(f"""
+    CREATE OR REPLACE TABLE books_reviews AS
+    SELECT * FROM read_csv_auto('{reviews_path}')
+""")
 
 # ------------------------------------------------------------
 # Process metadata
 # ------------------------------------------------------------
-processed_metadata = query("""
+con.execute("""
+    CREATE OR REPLACE TABLE processed_metadata AS
     WITH p1 AS (
         SELECT
             * EXCLUDE (publisher_date),
@@ -81,13 +79,17 @@ processed_metadata = query("""
     FROM p1
 """)
 
-processed_metadata.to_csv(f"{OUTDIR}/processed_metadata.csv", index=False)
-duckdb.register("processed_metadata", processed_metadata)
+con.execute(f"""
+    COPY processed_metadata
+    TO '{OUTDIR}/processed_metadata.csv'
+    (HEADER, DELIMITER ',')
+""")
 
 # ------------------------------------------------------------
 # Scorecard data
 # ------------------------------------------------------------
-scorecard_data = query("""
+con.execute("""
+    CREATE OR REPLACE TABLE scorecard_data AS
     SELECT
         year(m.published_date) AS year,
         count(DISTINCT m.parent_asin) AS total_books,
@@ -100,12 +102,17 @@ scorecard_data = query("""
     ORDER BY year
 """)
 
-scorecard_data.to_csv(f"{OUTDIR}/scorecard_data.csv", index=False)
+con.execute(f"""
+    COPY scorecard_data
+    TO '{OUTDIR}/scorecard_data.csv'
+    (HEADER, DELIMITER ',')
+""")
 
 # ------------------------------------------------------------
 # Genre data
 # ------------------------------------------------------------
-genre_data = query("""
+con.execute("""
+    CREATE OR REPLACE TABLE genre_data AS
     SELECT
         year(m.published_date) AS year,
         m.category_level_3_detail AS genre,
@@ -120,11 +127,18 @@ genre_data = query("""
     ORDER BY year, book_count DESC
 """)
 
-genre_data.to_csv(f"{OUTDIR}/genre_data.csv", index=False)
+con.execute(f"""
+    COPY genre_data
+    TO '{OUTDIR}/genre_data.csv'
+    (HEADER, DELIMITER ',')
+""")
 
 # ------------------------------------------------------------
 # Done
 # ------------------------------------------------------------
+rows = con.execute("SELECT COUNT(*) FROM processed_metadata").fetchone()[0]
+
 print("Data processing complete!")
-print(f"Processed metadata rows: {len(processed_metadata)}")
-print(scorecard_data)
+print(f"Processed metadata rows: {rows}")
+
+con.close()
