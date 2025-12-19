@@ -3,7 +3,6 @@ import shutil
 import pandas as pd
 import duckdb
 import kagglehub
-from kagglehub import KaggleDatasetAdapter
 
 # ------------------------------------------------------------
 # DuckDB helper
@@ -22,24 +21,23 @@ reviews_path = f"{OUTDIR}/reviews.csv"
 clean_reviews_path = f"{OUTDIR}/books_reviews_clean.csv"
 
 # ------------------------------------------------------------
-# Download Kaggle datasets (CORRECT for this KaggleHub version)
+# Download Kaggle dataset (SAFE METHOD)
 # ------------------------------------------------------------
 if not os.path.exists(metadata_path) or not os.path.exists(reviews_path):
 
-    books_metadata = kagglehub.dataset_load(
-        "hadifariborzi/amazon-books-dataset-20k-books-727k-reviews",
-        "amazon_books_metadata_sample_20k.csv",
-        KaggleDatasetAdapter.PANDAS,
+    dataset_dir = kagglehub.dataset_download(
+        "hadifariborzi/amazon-books-dataset-20k-books-727k-reviews"
     )
 
-    books_reviews = kagglehub.dataset_load(
-        "hadifariborzi/amazon-books-dataset-20k-books-727k-reviews",
-        "amazon_books_reviews_sample_20k.csv",
-        KaggleDatasetAdapter.PANDAS,
+    metadata_src = os.path.join(
+        dataset_dir, "amazon_books_metadata_sample_20k.csv"
+    )
+    reviews_src = os.path.join(
+        dataset_dir, "amazon_books_reviews_sample_20k.csv"
     )
 
-    books_metadata.to_csv(metadata_path, index=False)
-    books_reviews.to_csv(reviews_path, index=False)
+    shutil.copy(metadata_src, metadata_path)
+    shutil.copy(reviews_src, reviews_path)
 
 # ------------------------------------------------------------
 # Download cleaned reviews dataset
@@ -58,7 +56,7 @@ books_metadata = pd.read_csv(metadata_path)
 books_reviews = pd.read_csv(reviews_path)
 books_reviews_clean = pd.read_csv(clean_reviews_path)
 
-# Register DataFrames with DuckDB
+# Register DataFrames in DuckDB
 duckdb.register("books_metadata", books_metadata)
 duckdb.register("books_reviews", books_reviews)
 
