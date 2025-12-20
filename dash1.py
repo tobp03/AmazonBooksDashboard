@@ -227,7 +227,7 @@ with col_format_trends:
     fig_price.update_yaxes(title_text=format_axis_label, showgrid=False)
     fig_price.update_xaxes(title_text='Year', showgrid=False)
     fig_price.update_traces(hovertemplate='Year: %{x}<br>Avg Price: $%{y:.2f}<extra></extra>')
-    st.plotly_chart(fig_price, config={'responsive': True}, use_container_width=True)
+    st.plotly_chart(fig_price, config={'responsive': True}, width="stretch")
     
     # Line chart 2: Average price by year broken down by format
     format_lines = filtered_format[filtered_format['book_format'] != 'All Formats'].copy()
@@ -240,7 +240,7 @@ with col_format_trends:
     fig_format_lines.update_yaxes(title_text=format_axis_label, showgrid=False)
     fig_format_lines.update_xaxes(title_text='Year', showgrid=False)
     fig_format_lines.update_traces(hovertemplate='<b>%{fullData.name}</b><br>Year: %{x}<br>Avg Price: $%{y:.2f}<extra></extra>')
-    st.plotly_chart(fig_format_lines, config={'responsive': True}, use_container_width=True)
+    st.plotly_chart(fig_format_lines, config={'responsive': True}, width="stretch")
 
 # Prepare data for both sections
 filtered_genre = genre_data[filter_by_year(genre_data, year_range)]
@@ -302,7 +302,7 @@ fig_publishers.update_xaxes(showgrid=False, tickangle=-45)
 fig_publishers.update_yaxes(showgrid=False)
 fig_publishers.update_traces(text=text_labels, textposition='outside', textfont=dict(size=9),
                             hovertemplate='<b>%{x}</b><br>' + cols['axis_label'] + ': %{y:,.0f}<extra></extra>')
-st.plotly_chart(fig_publishers, config={'responsive': True}, use_container_width=True)
+st.plotly_chart(fig_publishers, config={'responsive': True}, width="stretch")
 
 # Top 10 Books and Authors
 def create_top_chart(data, group_cols, name_col, title):
@@ -461,5 +461,4 @@ with col_treemap:
 
 if st.button("Go to Author Insights Dashboard"):
     st.switch_page("pages/dash2.py")
-
 

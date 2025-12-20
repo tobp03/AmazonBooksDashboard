@@ -325,7 +325,7 @@ with pos_col_wc:
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.imshow(pos_wc, interpolation="bilinear")
         ax.axis("off")
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig, width="stretch")
     else:
         st.info("No positive reviews found.")
 
@@ -347,7 +347,7 @@ with neg_col_wc:
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.imshow(neg_wc, interpolation="bilinear")
         ax.axis("off")
-        st.pyplot(fig, use_container_width=True)
+        st.pyplot(fig, width="stretch")
     else:
         st.info("No negative reviews found.")
 
@@ -384,7 +384,7 @@ with bottom_col1:
         plot_bgcolor="#020617",
         font=dict(color="#e5e7eb"),
     )
-    st.plotly_chart(fig_pie, use_container_width=True)
+    st.plotly_chart(fig_pie, width="stretch")
 
 with bottom_col2:
     st.markdown('<div class="section-label">Sentiment Trend Over Time</div>', unsafe_allow_html=True)
@@ -395,7 +395,7 @@ with bottom_col2:
     else:
         df_time["is_positive"] = (df_time["sentiment_rating"] == 2).astype(int)
         df_time["is_negative"] = (df_time["sentiment_rating"] == 0).astype(int)
-        monthly = df_time.set_index("date").resample("M").sum()
+        monthly = df_time.set_index("date").resample("ME").sum()
 
         fig_trend = go.Figure()
         fig_trend.add_trace(go.Scatter(
@@ -419,7 +419,7 @@ with bottom_col2:
             font=dict(color="#e5e7eb"),
             legend=dict(orientation="h", y=1.02, x=1),
         )
-        st.plotly_chart(fig_trend, use_container_width=True)
+        st.plotly_chart(fig_trend, width="stretch")
 
 
 
