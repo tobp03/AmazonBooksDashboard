@@ -12,6 +12,9 @@ os.makedirs(OUTDIR, exist_ok=True)
 metadata_path = f"{OUTDIR}/metadata.csv"
 reviews_path = f"{OUTDIR}/reviews.csv"
 clean_reviews_path = f"{OUTDIR}/books_reviews_clean.csv"
+top_authors_path = f"{OUTDIR}/top_authors_data.csv"
+top_books_path = f"{OUTDIR}/top_books_data.csv"
+top_publishers_path = f"{OUTDIR}/top_publishers_data.csv"
 
 # ------------------------------------------------------------
 # Download Kaggle datasets (SAFE & VERSION-PROOF)
@@ -30,11 +33,28 @@ if not os.path.exists(metadata_path) or not os.path.exists(reviews_path):
         reviews_path,
     )
 
-if not os.path.exists(clean_reviews_path):
+if (
+    not os.path.exists(clean_reviews_path)
+    or not os.path.exists(top_authors_path)
+    or not os.path.exists(top_books_path)
+    or not os.path.exists(top_publishers_path)
+):
     clean_reviews_dir = kagglehub.dataset_download("tobypu/book-reviews-clean")
     shutil.copy(
         os.path.join(clean_reviews_dir, "books_reviews_clean.csv"),
         clean_reviews_path,
+    )
+    shutil.copy(
+        os.path.join(clean_reviews_dir, "top_authors_data.csv"),
+        top_authors_path,
+    )
+    shutil.copy(
+        os.path.join(clean_reviews_dir, "top_books_data.csv"),
+        top_books_path,
+    )
+    shutil.copy(
+        os.path.join(clean_reviews_dir, "top_publishers_data.csv"),
+        top_publishers_path,
     )
 
 # ------------------------------------------------------------
@@ -90,14 +110,23 @@ con.execute(f"""
 # ------------------------------------------------------------
 con.execute("""
     CREATE OR REPLACE TABLE scorecard_data AS
+    WITH base AS (
+        SELECT
+            year(m.published_date) AS year,
+            m.parent_asin,
+            m.price_numeric,
+            r.asin,
+            r.rating
+        FROM processed_metadata m
+        LEFT JOIN books_reviews r USING (parent_asin)
+        WHERE m.published_date IS NOT NULL
+    )
     SELECT
-        year(m.published_date) AS year,
-        count(DISTINCT m.parent_asin) AS total_books,
-        count(r.asin) AS total_reviews,
-        sum(r.rating * m.price_numeric) AS total_sales
-    FROM processed_metadata m
-    LEFT JOIN books_reviews r USING (parent_asin)
-    WHERE m.published_date IS NOT NULL
+        year,
+        count(DISTINCT parent_asin) AS total_books,
+        count(asin) AS total_reviews,
+        sum(rating * price_numeric) AS total_sales
+    FROM base
     GROUP BY year
     ORDER BY year
 """)
@@ -113,16 +142,26 @@ con.execute(f"""
 # ------------------------------------------------------------
 con.execute("""
     CREATE OR REPLACE TABLE genre_data AS
+    WITH base AS (
+        SELECT
+            year(m.published_date) AS year,
+            m.category_level_3_detail AS genre,
+            m.parent_asin,
+            m.price_numeric,
+            r.asin,
+            r.rating
+        FROM processed_metadata m
+        LEFT JOIN books_reviews r USING (parent_asin)
+        WHERE m.published_date IS NOT NULL
+          AND m.category_level_3_detail IS NOT NULL
+    )
     SELECT
-        year(m.published_date) AS year,
-        m.category_level_3_detail AS genre,
-        count(DISTINCT m.parent_asin) AS book_count,
-        count(r.asin) AS review_count,
-        sum(r.rating * m.price_numeric) AS total_sales
-    FROM processed_metadata m
-    LEFT JOIN books_reviews r USING (parent_asin)
-    WHERE m.published_date IS NOT NULL
-      AND m.category_level_3_detail IS NOT NULL
+        year,
+        genre,
+        count(DISTINCT parent_asin) AS book_count,
+        count(asin) AS review_count,
+        sum(rating * price_numeric) AS total_sales
+    FROM base
     GROUP BY year, genre
     ORDER BY year, book_count DESC
 """)
