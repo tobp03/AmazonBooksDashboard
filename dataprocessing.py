@@ -15,6 +15,7 @@ clean_reviews_path = f"{OUTDIR}/books_reviews_clean.csv"
 top_authors_path = f"{OUTDIR}/top_authors_data.csv"
 top_books_path = f"{OUTDIR}/top_books_data.csv"
 top_publishers_path = f"{OUTDIR}/top_publishers_data.csv"
+format_data_path = f"{OUTDIR}/format_data.csv"
 
 # ------------------------------------------------------------
 # Download Kaggle datasets (SAFE & VERSION-PROOF)
@@ -38,24 +39,25 @@ if (
     or not os.path.exists(top_authors_path)
     or not os.path.exists(top_books_path)
     or not os.path.exists(top_publishers_path)
+    or not os.path.exists(format_data_path)
 ):
-    clean_reviews_dir = kagglehub.dataset_download("tobypu/book-reviews-clean")
-    shutil.copy(
-        os.path.join(clean_reviews_dir, "books_reviews_clean.csv"),
-        clean_reviews_path,
+    clean_reviews_dir = kagglehub.dataset_download(
+        "tobypu/book-reviews-clean/versions/3",
+        force_download=True,
     )
-    shutil.copy(
-        os.path.join(clean_reviews_dir, "top_authors_data.csv"),
-        top_authors_path,
-    )
-    shutil.copy(
-        os.path.join(clean_reviews_dir, "top_books_data.csv"),
-        top_books_path,
-    )
-    shutil.copy(
-        os.path.join(clean_reviews_dir, "top_publishers_data.csv"),
-        top_publishers_path,
-    )
+
+    def copy_if_exists(filename: str, dest_path: str) -> None:
+        src_path = os.path.join(clean_reviews_dir, filename)
+        if os.path.exists(src_path):
+            shutil.copy(src_path, dest_path)
+        else:
+            print(f"Warning: {filename} not found in Kaggle dataset; skipping.")
+
+    copy_if_exists("books_reviews_clean.csv", clean_reviews_path)
+    copy_if_exists("top_authors_data.csv", top_authors_path)
+    copy_if_exists("top_books_data.csv", top_books_path)
+    copy_if_exists("top_publishers_data.csv", top_publishers_path)
+    copy_if_exists("format_data.csv", format_data_path)
 
 # ------------------------------------------------------------
 # DuckDB connection (LOW MEMORY SETTINGS)
