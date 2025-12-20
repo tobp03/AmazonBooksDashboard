@@ -3,21 +3,23 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import os
+from pathlib import Path
 
 st.set_page_config(page_title="Books Dashboard", layout="wide")
 st.title("Amazon Books Dashboard")
 
-DATASET_DIR = "./dataset"
+BASE_DIR = Path(__file__).resolve().parent
+DATASET_DIR = BASE_DIR / "dataset"
 REQUIRED_FILES = [
-    f"{DATASET_DIR}/scorecard_data.csv",
-    f"{DATASET_DIR}/genre_data.csv",
-    f"{DATASET_DIR}/top_books_data.csv",
-    f"{DATASET_DIR}/top_authors_data.csv",
-    f"{DATASET_DIR}/top_publishers_data.csv",
-    f"{DATASET_DIR}/format_data.csv",
+    DATASET_DIR / "scorecard_data.csv",
+    DATASET_DIR / "genre_data.csv",
+    DATASET_DIR / "top_books_data.csv",
+    DATASET_DIR / "top_authors_data.csv",
+    DATASET_DIR / "top_publishers_data.csv",
+    DATASET_DIR / "format_data.csv",
 ]
 
-missing_files = [path for path in REQUIRED_FILES if not os.path.exists(path)]
+missing_files = [str(path) for path in REQUIRED_FILES if not path.exists()]
 if missing_files:
     st.error(
         "Dataset files are missing. Run `python main.py` locally to generate them, "
@@ -46,19 +48,19 @@ section[data-testid="stSidebar"] {
 @st.cache_data
 def load_data(cache_bust: tuple):
     return {
-        'scorecard': pd.read_csv('./dataset/scorecard_data.csv'),
-        'genre': pd.read_csv('./dataset/genre_data.csv'),
-        'books': pd.read_csv('./dataset/top_books_data.csv'),
-        'authors': pd.read_csv('./dataset/top_authors_data.csv'),
-        'publishers': pd.read_csv('./dataset/top_publishers_data.csv')
+        'scorecard': pd.read_csv(DATASET_DIR / "scorecard_data.csv"),
+        'genre': pd.read_csv(DATASET_DIR / "genre_data.csv"),
+        'books': pd.read_csv(DATASET_DIR / "top_books_data.csv"),
+        'authors': pd.read_csv(DATASET_DIR / "top_authors_data.csv"),
+        'publishers': pd.read_csv(DATASET_DIR / "top_publishers_data.csv"),
     }
 
 data = load_data((
-    os.path.getmtime('./dataset/scorecard_data.csv'),
-    os.path.getmtime('./dataset/genre_data.csv'),
-    os.path.getmtime('./dataset/top_books_data.csv'),
-    os.path.getmtime('./dataset/top_authors_data.csv'),
-    os.path.getmtime('./dataset/top_publishers_data.csv')
+    os.path.getmtime(DATASET_DIR / "scorecard_data.csv"),
+    os.path.getmtime(DATASET_DIR / "genre_data.csv"),
+    os.path.getmtime(DATASET_DIR / "top_books_data.csv"),
+    os.path.getmtime(DATASET_DIR / "top_authors_data.csv"),
+    os.path.getmtime(DATASET_DIR / "top_publishers_data.csv"),
 ))
 scorecard, genre_data, top_books_data, top_authors_data, top_publishers_data = data['scorecard'], data['genre'], data['books'], data['authors'], data['publishers']
 
@@ -128,9 +130,9 @@ for idx, (col, label, value_col, fmt) in enumerate([(col1, "Total Books", "total
 # Load format analysis data (cache busts when file changes)
 @st.cache_data
 def load_format_data(cache_bust: float):
-    return pd.read_csv('./dataset/format_data.csv')
+    return pd.read_csv(DATASET_DIR / "format_data.csv")
 
-format_data = load_format_data(os.path.getmtime('./dataset/format_data.csv'))
+format_data = load_format_data(os.path.getmtime(DATASET_DIR / "format_data.csv"))
 
 # Book Format Analysis Section
 st.subheader("Book Format Analysis")
