@@ -16,6 +16,7 @@ top_authors_path = f"{OUTDIR}/top_authors_data.csv"
 top_books_path = f"{OUTDIR}/top_books_data.csv"
 top_publishers_path = f"{OUTDIR}/top_publishers_data.csv"
 format_data_path = f"{OUTDIR}/format_data.csv"
+clean_reviews_sample_marker = f"{OUTDIR}/books_reviews_clean.sampled_50"
 
 # ------------------------------------------------------------
 # Download Kaggle datasets (SAFE & VERSION-PROOF)
@@ -65,6 +66,26 @@ if (
 con = duckdb.connect()
 con.execute("PRAGMA threads=2")
 con.execute("PRAGMA memory_limit='1GB'")
+
+# ------------------------------------------------------------
+# Downsample clean reviews to 50% (one-time)
+# ------------------------------------------------------------
+if os.path.exists(clean_reviews_path) and not os.path.exists(clean_reviews_sample_marker):
+    temp_clean_reviews_path = f"{OUTDIR}/books_reviews_clean_sampled.csv"
+    con.execute(f"""
+        CREATE OR REPLACE TABLE books_reviews_clean_sampled AS
+        SELECT *
+        FROM read_csv_auto('{clean_reviews_path}')
+        USING SAMPLE 50 PERCENT
+    """)
+    con.execute(f"""
+        COPY books_reviews_clean_sampled
+        TO '{temp_clean_reviews_path}'
+        (HEADER, DELIMITER ',')
+    """)
+    os.replace(temp_clean_reviews_path, clean_reviews_path)
+    with open(clean_reviews_sample_marker, "w") as marker:
+        marker.write("sampled=50\n")
 
 # ------------------------------------------------------------
 # Load CSVs DIRECTLY into DuckDB (NO PANDAS)
