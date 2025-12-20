@@ -7,6 +7,25 @@ import os
 st.set_page_config(page_title="Books Dashboard", layout="wide")
 st.title("Amazon Books Dashboard")
 
+DATASET_DIR = "./dataset"
+REQUIRED_FILES = [
+    f"{DATASET_DIR}/scorecard_data.csv",
+    f"{DATASET_DIR}/genre_data.csv",
+    f"{DATASET_DIR}/top_books_data.csv",
+    f"{DATASET_DIR}/top_authors_data.csv",
+    f"{DATASET_DIR}/top_publishers_data.csv",
+    f"{DATASET_DIR}/format_data.csv",
+]
+
+missing_files = [path for path in REQUIRED_FILES if not os.path.exists(path)]
+if missing_files:
+    st.error(
+        "Dataset files are missing. Run `python main.py` locally to generate them, "
+        "or commit the `dataset/` outputs to the repo before deploying.\n\n"
+        f"Missing: {', '.join(missing_files)}"
+    )
+    st.stop()
+
 # Hide Streamlit sidebar page navigation
 st.markdown("""
 <style>
@@ -461,4 +480,3 @@ with col_treemap:
 
 if st.button("Go to Author Insights Dashboard"):
     st.switch_page("pages/dash2.py")
-
