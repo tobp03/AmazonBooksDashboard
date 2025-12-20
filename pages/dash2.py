@@ -11,29 +11,6 @@ import plotly.graph_objects as go
 # ===========================================
 st.set_page_config(page_title="Book Reviews Dashboard", layout="wide")
 
-st.markdown("""
-<style>
-/* Hide the entire sidebar including Pages navigation */
-section[data-testid="stSidebar"] {
-    display: none !important;
-}
-
-/* Also hide the page navigation items */
-section[data-testid="stSidebarNav"] {
-    display: none !important;
-}
-
-/* Expand main content to full width */
-div[data-testid="stAppViewContainer"] {
-    margin-left: 0 !important;
-}
-
-div[data-testid="stToolbar"] {
-    right: 0 !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
 # ===========================================
 # GLOBAL STYLES (DARK ROYAL BLUE THEME)
 # ===========================================
@@ -421,10 +398,6 @@ with bottom_col2:
         )
         st.plotly_chart(fig_trend, width="stretch")
 
-
-
-if st.button("Back to Main Dashboard"):
-    st.switch_page("dash1.py")
 
 
 # Close wrapper
