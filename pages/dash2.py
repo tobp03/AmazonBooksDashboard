@@ -3,6 +3,7 @@ import pandas as pd
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import os
+from pathlib import Path
 import numpy as np
 import plotly.graph_objects as go
 
@@ -10,6 +11,9 @@ import plotly.graph_objects as go
 # PAGE CONFIG
 # ===========================================
 st.set_page_config(page_title="Book Reviews Dashboard", layout="wide")
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATASET_DIR = BASE_DIR / "dataset"
 
 # ===========================================
 # GLOBAL STYLES (DARK ROYAL BLUE THEME)
@@ -135,7 +139,7 @@ st.markdown('<div class="dashboard-wrapper">', unsafe_allow_html=True)
 # ===========================================
 @st.cache_data
 def load_data():
-    df = pd.read_csv("./dataset/books_reviews_clean.csv")
+    df = pd.read_csv(DATASET_DIR / "books_reviews_clean.csv")
     df = df.copy()
     df = df.rename(columns={"category_level_3_detail": "category"})
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
@@ -280,7 +284,7 @@ def render_review_card(title, author, votes, text, accent_color):
 st.markdown('<div class="section-label">Author–Books Network Graph</div>', unsafe_allow_html=True)
 
 try:
-    with open("./dataset/Author_to_Books.html", "r", encoding="utf-8") as f:
+    with open(DATASET_DIR / "Author_to_Books.html", "r", encoding="utf-8") as f:
         graph_html = f.read()
     st.components.v1.html(graph_html, height=600, scrolling=True) # type: ignore
 except FileNotFoundError:

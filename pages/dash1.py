@@ -8,7 +8,7 @@ from pathlib import Path
 st.set_page_config(page_title="Books Dashboard", layout="wide")
 st.title("Amazon Books Dashboard")
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 DATASET_DIR = BASE_DIR / "dataset"
 REQUIRED_FILES = [
     DATASET_DIR / "scorecard_data.csv",
@@ -462,4 +462,3 @@ with col_treemap:
         trace.text = [f"<b>{label}</b><br>{format_treemap_value(val)}" for label, val in zip(trace.labels, trace.values)]
         trace.textposition = 'middle center'
     st.plotly_chart(fig, config={'responsive': True})
-
